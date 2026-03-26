@@ -154,9 +154,9 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential libssl-dev && rm -rf /var/lib/apt/lists/*
 
-# Install py-diameter (local package — build context is supershi/)
-COPY py-diameter/ /py-diameter/
-RUN pip install --no-cache-dir /py-diameter/
+# Install python-diameter (local package — build context is supers/)
+COPY python-diameter/ /python-diameter/
+RUN pip install --no-cache-dir /python-diameter/
 
 # Install runtime dependencies
 RUN pip install --no-cache-dir \
@@ -175,7 +175,7 @@ ENV DB_PATH=/data/hss.db \
 # CMD is set per-service in docker-compose
 ```
 
-**Build context must be `supershi/`** (parent dir) so `COPY py-diameter/` resolves correctly.
+**Build context must be `supers/`** (parent dir) so `COPY python-diameter/` resolves correctly.
 
 ### 6. New: `docker-compose.yml`
 
@@ -280,7 +280,7 @@ The `add_application(hss_app, peers)` call binds which peers can exchange messag
 
 ```bash
 # Build
-cd /home/rayray/supershi/nostr-hss
+cd /home/farcee/supers/nostr-hss
 docker compose build
 
 # Start stack
@@ -302,5 +302,5 @@ docker compose up --scale as=3
 **Local dev (no Docker) still works as before:**
 
 ```bash
-PYTHONPATH=/home/rayray/supershi/py-diameter/src python run.py
+PYTHONPATH=/home/farcee/supers/python-diameter/src python run.py
 ```
