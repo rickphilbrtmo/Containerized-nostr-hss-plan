@@ -8,7 +8,7 @@ The current stack runs all three components (HSS, AS, REST API) in a single proc
 - **AS** can scale out — each replica maintains its own persistent Diameter connection to HSS
 - **API** can scale out — decoupled from AS via HTTP instead of an in-process call
 
-`py-diameter` lives at `/home/rayray/supershi/py-diameter/` (sibling to `nostr-hss/`) and is a proper installable package (`pyproject.toml`, package name `python-diameter`).
+`python-diameter` lives at `/home/farcee/supers/python-diameter/` (sibling to `nostr-hss/`) and is a proper installable package (`pyproject.toml`, package name `python-diameter`).
 
 ---
 
