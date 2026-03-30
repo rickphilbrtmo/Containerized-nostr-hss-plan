@@ -1,0 +1,55 @@
+version: "3.9"
+services:
+  hss:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python /app/hss.py --port 3868
+    ports:
+      - "3868:3868"
+    volumes:
+      - hss-data:/data
+    environment:
+      HSS_BIND: "0.0.0.0"
+      DB_PATH: /data/hss.db
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket;s=socket.socket();s.settimeout(2);s.connect(('localhost',3868));s.close()"]
+      interval: 10s
+      retries: 5
+      start_period: 15s
+
+  as:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python /app/client.py --serve
+    environment:
+      HSS_HOST: hss
+      HSS_PORT: "3868"
+      AS_PORT: "3869"
+      AS_HTTP_PORT: "8090"
+      ORIGIN_REALM: nostr.realm
+      DB_PATH: /data/hss.db
+    volumes:
+      - hss-data:/data
+    depends_on:
+      hss:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python /app/api.py --port 8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - hss-data:/data
+    environment:
+      AS_URL: http://as:8090
+      DB_PATH: /data/hss.db
+    depends_on:
+      - as
+
+volumes:
+  hss-data:

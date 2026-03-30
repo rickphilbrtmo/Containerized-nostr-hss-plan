@@ -1,0 +1,14 @@
+{
+  "sub001": {
+    "npub": "npub1testsubscriber001xx",
+    "pallets": ["health_wellness"],
+    "threshold_override": null,
+    "active": true
+  },
+  "sub002": {
+    "npub": "npub1testsubscriber002xx",
+    "pallets": ["health_wellness", "fun_tech"],
+    "threshold_override": 15,
+    "active": true
+  }
+}

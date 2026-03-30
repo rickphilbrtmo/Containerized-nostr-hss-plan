@@ -1,0 +1,25 @@
+{
+  "health_wellness": {
+    "name": "Health & Wellness",
+    "description": "Exercise, food prep, sleep hacks, meditation, red light therapy",
+    "npubs": [
+      "npub1spdnfacgsd7lk0nlqkq443tkq4jx9z6c6ksvaquuewmw7d3qltpslcq6j7",
+      "npub18q204nzhrcrrz8875ytkpf8vk0eg649dc98xuqwsz65znph7z5asz07j7z",
+      "npub1pmgea4jqgwu7qfe4hgye2ryuvkj9hynjewm42qfj3tf03j3u9w8qpnfp3c"
+    ],
+    "hashtags": ["health", "wellness", "fitness", "meditation", "redlight", "carnivore", "sleep"],
+    "hype_threshold": 2
+  },
+  "bitcoin_tech": {
+    "name": "Bitcoin & Tech",
+    "description": "Bitcoin dev, Lightning, Nostr protocol, open source",
+    "npubs": [
+      "npub1dergggklka99wwrs92yz8wdjs952h2ux2ha2ed598ngwu9w7a6fsh9xzpc",
+      "npub1qny3tkh0acurzla8x3zy4nhrjz5zd8l9sy9jys09umwng00manysew95gx",
+      "npub1rtlqca8r6auyaw5n5h3l5422dm4sry5dzfee4696fqe8s6qgudks7djtfs",
+      "npub180cvv07tjdrrgpa0j7j7tmnyl2yr6yr7l8j4s3evf6u64th6gkwsyjh6w6"
+    ],
+    "hashtags": ["bitcoin", "lightning", "nostr", "opensource", "freedom"],
+    "hype_threshold": 2
+  }
+}

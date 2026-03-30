@@ -1,0 +1,12 @@
+{
+  "_comment": "Nostr-HSS service configuration",
+  "service_nsec": nsec1qqqqqqqqqqqqqqqGET_AN_SEC_INTO_THIS22222222222222222222205,
+  "service_npub": npub1nav439ya9qlgz92th5jrn3mt28rgun9usuvues75d3cd4lx9tkjqw4p4js,
+  "service_name": "Nostr Hype Bot",
+  "dm_relay": "wss://relay.damus.io",
+  "dm_relays": [
+    "wss://relay.damus.io",
+    "wss://nos.lol",
+    "wss://relay.primal.net"
+  ]
+}

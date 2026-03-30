@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nostr Hype — Subscribe to Pallets</title>
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --border: #2a2a2a;
+    --accent: #9b59b6;
+    --accent2: #e056fd;
+    --text: #e8e8e8;
+    --muted: #888;
+    --green: #2ecc71;
+    --red: #e74c3c;
+    --yellow: #f39c12;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+  }
+  h1 {
+    font-size: 1.8rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.3rem;
+  }
+  .tagline { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 580px;
+    margin-bottom: 1.2rem;
+  }
+  .card h2 { font-size: 1rem; color: var(--muted); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .signer-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; }
+  .tab {
+    flex: 1; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem;
+    transition: all 0.15s;
+  }
+  .tab.active { border-color: var(--accent); color: var(--text); background: rgba(155,89,182,0.12); }
+  .tab:hover:not(.active) { border-color: #444; color: var(--text); }
+  .signer-panel { display: none; }
+  .signer-panel.active { display: block; }
+  .ext-status {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.8rem 1rem; border-radius: 8px;
+    background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+    font-size: 0.9rem; margin-bottom: 1rem;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+  .dot.green { background: var(--green); }
+  .dot.yellow { background: var(--yellow); }
+  input[type="text"], input[type="url"] {
+    width: 100%; padding: 0.7rem 0.9rem;
+    background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 0.9rem;
+    outline: none; transition: border-color 0.15s;
+    font-family: monospace;
+  }
+  input:focus { border-color: var(--accent); }
+  .label { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.4rem; margin-top: 0.8rem; }
+  .pallets-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin: 1rem 0; }
+  .pallet-item {
+    padding: 0.8rem; border-radius: 8px;
+    border: 1px solid var(--border); cursor: pointer;
+    transition: all 0.15s; user-select: none;
+  }
+  .pallet-item:hover { border-color: #555; }
+  .pallet-item.selected { border-color: var(--accent); background: rgba(155,89,182,0.1); }
+  .pallet-name { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.25rem; }
+  .pallet-desc { font-size: 0.75rem; color: var(--muted); line-height: 1.3; }
+  .pallet-tags { font-size: 0.7rem; color: var(--accent); margin-top: 0.3rem; }
+  .btn {
+    width: 100%; padding: 0.85rem; border-radius: 8px;
+    border: none; cursor: pointer; font-size: 0.95rem; font-weight: 600;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white; transition: opacity 0.15s; margin-top: 0.5rem;
+  }
+  .btn:hover { opacity: 0.88; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.outline {
+    background: transparent; border: 1px solid var(--accent);
+    color: var(--accent);
+  }
+  .status-box {
+    padding: 0.8rem 1rem; border-radius: 8px; font-size: 0.85rem;
+    margin-top: 0.8rem; display: none; line-height: 1.5;
+  }
+  .status-box.show { display: block; }
+  .status-box.ok { background: rgba(46,204,113,0.1); border: 1px solid rgba(46,204,113,0.3); color: var(--green); }
+  .status-box.err { background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.3); color: var(--red); }
+  .status-box.info { background: rgba(155,89,182,0.1); border: 1px solid rgba(155,89,182,0.3); color: #c39bd3; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff3; border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .small { font-size: 0.78rem; color: var(--muted); margin-top: 0.5rem; line-height: 1.5; }
+  .npub-display {
+    font-family: monospace; font-size: 0.75rem; color: var(--muted);
+    word-break: break-all; margin-top: 0.4rem;
+  }
+  .bunker-step { margin-bottom: 0.8rem; }
+  .step-num {
+    display: inline-block; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--accent); color: white; font-size: 0.7rem;
+    text-align: center; line-height: 20px; margin-right: 0.4rem; flex-shrink: 0;
+  }
+  .step-row { display: flex; align-items: flex-start; gap: 0.5rem; }
+  footer { color: var(--muted); font-size: 0.75rem; margin-top: 2rem; text-align: center; }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<h1>🔥 Nostr Hype</h1>
+<p class="tagline">Subscribe to pallet alerts — get notified when your interests blow up</p>
+
+<!-- STEP 1: Connect Signer -->
+<div class="card" id="card-signer">
+  <h2>Step 1 — Connect your Nostr identity</h2>
+
+  <div class="signer-tabs">
+    <button class="tab active" onclick="switchTab('ext')">🔌 Extension (NIP-07)</button>
+    <button class="tab" onclick="switchTab('bunker')">🏰 Bunker (NIP-46)</button>
+  </div>
+
+  <!-- NIP-07 Panel -->
+  <div class="signer-panel active" id="panel-ext">
+    <div class="ext-status">
+      <div class="dot" id="ext-dot"></div>
+      <span id="ext-msg">Checking for extension...</span>
+    </div>
+    <div id="ext-npub" class="npub-display"></div>
+    <button class="btn" id="btn-ext-connect" onclick="connectExtension()" disabled>Connect Extension</button>
+    <p class="small">Works with Alby, nos2x, Flamingo, and any NIP-07 compatible extension. Your private key never leaves the extension.</p>
+  </div>
+
+  <!-- NIP-46 Bunker Panel -->
+  <div class="signer-panel" id="panel-bunker">
+    <div class="bunker-step">
+      <div class="step-row">
+        <span class="step-num">1</span>
+        <div>
+          <div class="label">Your bunker connection string</div>
+          <input type="text" id="bunker-uri" placeholder="bunker://npub1...@wss://relay.example.com?secret=..." />
+        </div>
+      </div>
+    </div>
+    <button class="btn" id="btn-bunker-connect" onclick="connectBunker()">Connect Bunker</button>
+    <div id="bunker-npub" class="npub-display" style="margin-top:0.6rem"></div>
+    <p class="small" style="margin-top:0.6rem">
+      Get a bunker connection string from <a href="https://nsec.app" target="_blank">nsec.app</a>,
+      <a href="https://github.com/kind-0/nsecbunker" target="_blank">nsecbunker</a>,
+      or <strong>Amber</strong> on Android. Paste the <code>bunker://</code> URI above.
+    </p>
+  </div>
+</div>
+
+<!-- STEP 2: Pick Pallets -->
+<div class="card" id="card-pallets" style="display:none">
+  <h2>Step 2 — Choose your pallets</h2>
+  <div class="pallets-grid" id="pallets-grid">
+    <div style="color:var(--muted);font-size:0.85rem">Loading pallets...</div>
+  </div>
+  <div class="status-box info" id="pallets-status"></div>
+</div>
+
+<!-- STEP 3: Subscribe -->
+<div class="card" id="card-subscribe" style="display:none">
+  <h2>Step 3 — Subscribe</h2>
+  <p style="font-size:0.85rem;color:var(--muted);margin-bottom:1rem">
+    Your extension/bunker will ask you to sign a challenge event (kind 22242).
+    This proves you own the npub — your key never leaves your signer.
+  </p>
+  <button class="btn" id="btn-subscribe" onclick="doSubscribe()">Sign &amp; Subscribe</button>
+  <div class="status-box" id="sub-status"></div>
+</div>
+
+<!-- nostr-tools via CDN -->
+<script type="module">
+import * as NostrTools from 'https://esm.sh/nostr-tools@2.11.0';
+import { SimplePool } from 'https://esm.sh/nostr-tools@2.11.0/pool';
+
+// ─── Config ───────────────────────────────────────────────────────────────
+const API_BASE = window.location.origin; // same origin as this page
+const BUNKER_RELAYS = [
+  'wss://relay.damus.io',
+  'wss://nos.lol',
+  'wss://relay.nsecbunker.com',
+];
+
+// ─── State ─────────────────────────────────────────────────────────────────
+let signerMode = null;       // 'ext' | 'bunker'
+let userPubkeyHex = null;
+let userNpub = null;
+let bunkerSigner = null;
+let selectedPallets = new Set();
+
+// ─── Tab switching ─────────────────────────────────────────────────────────
+window.switchTab = (tab) => {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'ext') || (i === 1 && tab === 'bunker'));
+  });
+  document.getElementById('panel-ext').classList.toggle('active', tab === 'ext');
+  document.getElementById('panel-bunker').classList.toggle('active', tab === 'bunker');
+};
+
+// ─── NIP-07 Extension ──────────────────────────────────────────────────────
+function checkExtension() {
+  const dot = document.getElementById('ext-dot');
+  const msg = document.getElementById('ext-msg');
+  const btn = document.getElementById('btn-ext-connect');
+
+  if (window.nostr) {
+    dot.className = 'dot yellow';
+    msg.textContent = 'Extension detected — click to connect';
+    btn.disabled = false;
+  } else {
+    dot.className = 'dot';
+    msg.textContent = 'No NIP-07 extension found. Install Alby or nos2x.';
+    btn.disabled = true;
+    btn.textContent = 'No Extension Found';
+  }
+}
+
+window.connectExtension = async () => {
+  const btn = document.getElementById('btn-ext-connect');
+  const dot = document.getElementById('ext-dot');
+  const msg = document.getElementById('ext-msg');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Connecting...';
+
+  try {
+    userPubkeyHex = await window.nostr.getPublicKey();
+    userNpub = NostrTools.nip19.npubEncode(userPubkeyHex);
+    signerMode = 'ext';
+
+    dot.className = 'dot green';
+    msg.textContent = 'Connected!';
+    document.getElementById('ext-npub').textContent = userNpub;
+    btn.textContent = '✓ Connected';
+
+    onSignerReady();
+  } catch (e) {
+    dot.className = 'dot';
+    msg.textContent = 'Connection rejected: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = 'Try Again';
+  }
+};
+
+// ─── NIP-46 Bunker ─────────────────────────────────────────────────────────
+window.connectBunker = async () => {
+  const uri = document.getElementById('bunker-uri').value.trim();
+  const btn = document.getElementById('btn-bunker-connect');
+  const npubEl = document.getElementById('bunker-npub');
+
+  if (!uri.startsWith('bunker://')) {
+    showStatus('bunker-npub-err', 'URI must start with bunker://', 'err');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Connecting to bunker...';
+
+  try {
+    // Parse bunker URI: bunker://<pubkey>@<relay>?secret=<secret>
+    const withoutScheme = uri.slice('bunker://'.length);
+    const atIdx = withoutScheme.indexOf('@');
+    if (atIdx < 0) throw new Error('Invalid bunker URI format');
+
+    const remotePubkeyHex = withoutScheme.slice(0, atIdx);
+    const rest = withoutScheme.slice(atIdx + 1);
+    const urlObj = new URL('wss://' + rest.replace(/^wss?:\/\//, ''));
+    const relayUrl = 'wss://' + urlObj.host + urlObj.pathname;
+    const secret = urlObj.searchParams.get('secret') || '';
+
+    // Generate local ephemeral keypair
+    const localSecretKey = NostrTools.generateSecretKey();
+    const localPubkeyHex = NostrTools.getPublicKey(localSecretKey);
+
+    // Connect via relay pool
+    const pool = new SimplePool();
+
+    // Build NIP-46 connect request
+    const connectPayload = JSON.stringify({
+      id: crypto.randomUUID(),
+      method: 'connect',
+      params: [localPubkeyHex, secret],
+    });
+
+    // Encrypt payload (NIP-04)
+    const encrypted = await NostrTools.nip04.encrypt(localSecretKey, remotePubkeyHex, connectPayload);
+
+    const connectEvent = {
+      kind: 24133,
+      pubkey: localPubkeyHex,
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [['p', remotePubkeyHex]],
+      content: encrypted,
+    };
+    connectEvent.id = NostrTools.getEventHash(connectEvent);
+    connectEvent.sig = NostrTools.finalizeEvent(connectEvent, localSecretKey).sig;
+
+    // Subscribe for response, then publish connect
+    let resolved = false;
+    const responsePromise = new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        if (!resolved) reject(new Error('Bunker connection timed out (15s)'));
+      }, 15000);
+
+      pool.subscribeMany([relayUrl], [{
+        kinds: [24133],
+        '#p': [localPubkeyHex],
+        since: Math.floor(Date.now() / 1000) - 5,
+      }], {
+        onevent(evt) {
+          if (resolved) return;
+          NostrTools.nip04.decrypt(localSecretKey, remotePubkeyHex, evt.content)
+            .then(plaintext => {
+              const resp = JSON.parse(plaintext);
+              if (resp.result === 'ack' || resp.result === localPubkeyHex) {
+                resolved = true;
+                clearTimeout(timeout);
+                resolve({ localSecretKey, localPubkeyHex, remotePubkeyHex, relayUrl, pool });
+              }
+            }).catch(() => {});
+        }
+      });
+    });
+
+    await pool.publish([relayUrl], connectEvent);
+    const bunkerCtx = await responsePromise;
+
+    // Get the user's pubkey from bunker
+    const getPubkeyResp = await bunkerRequest(bunkerCtx, 'get_public_key', []);
+    userPubkeyHex = getPubkeyResp;
+    userNpub = NostrTools.nip19.npubEncode(userPubkeyHex);
+
+    bunkerSigner = bunkerCtx;
+    signerMode = 'bunker';
+
+    npubEl.textContent = '✓ ' + userNpub;
+    btn.textContent = '✓ Bunker Connected';
+    onSignerReady();
+
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Retry';
+    document.getElementById('bunker-npub').textContent = '✗ ' + e.message;
+  }
+};
+
+async function bunkerRequest(ctx, method, params) {
+  const { localSecretKey, localPubkeyHex, remotePubkeyHex, relayUrl, pool } = ctx;
+  const reqId = crypto.randomUUID();
+  const payload = JSON.stringify({ id: reqId, method, params });
+  const encrypted = await NostrTools.nip04.encrypt(localSecretKey, remotePubkeyHex, payload);
+
+  const evt = NostrTools.finalizeEvent({
+    kind: 24133,
+    pubkey: localPubkeyHex,
+    created_at: Math.floor(Date.now() / 1000),
+    tags: [['p', remotePubkeyHex]],
+    content: encrypted,
+  }, localSecretKey);
+
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error(`Bunker ${method} timed out`)), 15000);
+
+    pool.subscribeMany([relayUrl], [{
+      kinds: [24133],
+      '#p': [localPubkeyHex],
+      since: Math.floor(Date.now() / 1000) - 2,
+    }], {
+      onevent(respEvt) {
+        NostrTools.nip04.decrypt(localSecretKey, remotePubkeyHex, respEvt.content)
+          .then(plaintext => {
+            const resp = JSON.parse(plaintext);
+            if (resp.id === reqId) {
+              clearTimeout(timeout);
+              if (resp.error) reject(new Error(resp.error));
+              else resolve(resp.result);
+            }
+          }).catch(() => {});
+      }
+    });
+
+    pool.publish([relayUrl], evt);
+  });
+}
+
+// ─── Signer ready: load pallets ─────────────────────────────────────────────
+async function onSignerReady() {
+  document.getElementById('card-pallets').style.display = 'block';
+  document.getElementById('card-subscribe').style.display = 'block';
+  await loadPallets();
+}
+
+// ─── Load pallets from API ──────────────────────────────────────────────────
+async function loadPallets() {
+  const grid = document.getElementById('pallets-grid');
+  try {
+    const resp = await fetch(`${API_BASE}/pallets`);
+    const data = await resp.json();
+    grid.innerHTML = '';
+    for (const [id, p] of Object.entries(data)) {
+      const el = document.createElement('div');
+      el.className = 'pallet-item';
+      el.dataset.id = id;
+      el.innerHTML = `
+        <div class="pallet-name">${p.name}</div>
+        <div class="pallet-desc">${p.description}</div>
+        <div class="pallet-tags">${p.hashtags.slice(0,4).map(t => '#'+t).join(' ')}</div>
+      `;
+      el.addEventListener('click', () => togglePallet(el, id));
+      grid.appendChild(el);
+    }
+  } catch (e) {
+    grid.innerHTML = `<div style="color:var(--red)">Failed to load pallets: ${e.message}</div>`;
+  }
+}
+
+function togglePallet(el, id) {
+  if (selectedPallets.has(id)) {
+    selectedPallets.delete(id);
+    el.classList.remove('selected');
+  } else {
+    selectedPallets.add(id);
+    el.classList.add('selected');
+  }
+  document.getElementById('btn-subscribe').textContent =
+    selectedPallets.size > 0
+      ? `Sign & Subscribe to ${selectedPallets.size} pallet${selectedPallets.size > 1 ? 's' : ''}`
+      : 'Sign & Subscribe';
+}
+
+// ─── Subscribe flow ─────────────────────────────────────────────────────────
+window.doSubscribe = async () => {
+  const btn = document.getElementById('btn-subscribe');
+  const statusEl = document.getElementById('sub-status');
+
+  if (selectedPallets.size === 0) {
+    showStatus('sub-status', 'Pick at least one pallet first.', 'err');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Getting challenge...';
+  showStatus('sub-status', 'Requesting challenge from server...', 'info');
+
+  try {
+    // 1. Get challenge
+    const chResp = await fetch(`${API_BASE}/challenge`);
+    const { nonce } = await chResp.json();
+
+    // 2. Build kind 22242 auth event
+    btn.innerHTML = '<span class="spinner"></span>Waiting for signature...';
+    showStatus('sub-status', 'Check your signer — approval required...', 'info');
+
+    const eventTemplate = {
+      kind: 22242,
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [['challenge', nonce]],
+      content: 'nostr-hss-auth',
+    };
+
+    let signedEvent;
+    if (signerMode === 'ext') {
+      signedEvent = await window.nostr.signEvent(eventTemplate);
+    } else {
+      // NIP-46: ask bunker to sign
+      const eventWithPubkey = { ...eventTemplate, pubkey: userPubkeyHex };
+      eventWithPubkey.id = NostrTools.getEventHash(eventWithPubkey);
+      const sig = await bunkerRequest(bunkerSigner, 'sign_event', [JSON.stringify(eventWithPubkey)]);
+      signedEvent = typeof sig === 'string' ? JSON.parse(sig) : sig;
+    }
+
+    // 3. POST to /subscribe
+    btn.innerHTML = '<span class="spinner"></span>Submitting...';
+    showStatus('sub-status', 'Sending to server...', 'info');
+
+    const subResp = await fetch(`${API_BASE}/subscribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        npub: userNpub,
+        pallet_ids: Array.from(selectedPallets),
+        signed_event: signedEvent,
+      }),
+    });
+
+    const result = await subResp.json();
+
+    if (subResp.ok) {
+      btn.textContent = '✓ Subscribed!';
+      showStatus('sub-status',
+        `✓ Subscribed to: ${result.pallets.join(', ')}\n\nYou'll get a Nostr DM when your pallets hit hype threshold.`,
+        'ok');
+    } else {
+      throw new Error(result.detail || 'Server error');
+    }
+
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Try Again';
+    showStatus('sub-status', '✗ ' + e.message, 'err');
+  }
+};
+
+function showStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = `status-box show ${type}`;
+  el.style.whiteSpace = 'pre-wrap';
+  el.textContent = msg;
+}
+
+// ─── Init ───────────────────────────────────────────────────────────────────
+setTimeout(checkExtension, 300);
+</script>
+
+<footer>
+  Powered by <a href="https://github.com/nicksellen/python-diameter" target="_blank">python-diameter</a>
+  · Auth via <a href="https://github.com/nostr-protocol/nips/blob/master/46.md" target="_blank">NIP-46</a>
+  / <a href="https://github.com/nostr-protocol/nips/blob/master/07.md" target="_blank">NIP-07</a>
+</footer>
+
+</body>
+</html>
